@@ -30,8 +30,8 @@
   --text-light: var(--brand-light-text-color, #ffffff);
   --text-disabled:rgb(113, 113, 113);
   --link-color: var(--brand-link-color, #131313);
-  --link-hover-color: var(--brand-link-hover-color, #F97316);
-  --main-accent-color: var(--brand-theme-color, #FB923C);
+  --link-hover-color: var(--brand-link-hover-color, #ffc719);
+  --main-accent-color: var(--brand-theme-color, #ffc719);
 
 
   --dark-color-opacity: rgba(0, 0, 0, 0.55);
@@ -326,18 +326,18 @@ body.gray-theme {
 
 
 body.red-theme {
-  --main-accent-color: #DC2626;
-  --link-hover-color: #EF4444;
+  --link-hover-color: #026169;
+  --main-accent-color: #026169;
 }
 
 body.blue-theme {
-  --main-accent-color: #2563EB;   /* Modern Bright Blue */
-  --link-hover-color: #3B82F6;    /* Lighter Sky Blue */
+  --link-hover-color: #0000ff;
+  --main-accent-color: #0000ff;
 }
 
 body.green-theme {
-  --main-accent-color: #059669;   /* Fresh Emerald */
-  --link-hover-color: #10B981;    /* Lighter Mint Green */
+  --link-hover-color: #00ff00;
+  --main-accent-color: #00ff00;
 }
 
 .wehealthcare-theme {
@@ -1105,8 +1105,3 @@ table {
   transform: translateX(0);
 }
 
-/* Accessibility: darken default accent and hover for better contrast */
-:root {
-  --main-accent-color: #C2410C; /* darker orange for contrast */
-  --link-hover-color: #9A3412;  /* darker hover */
-}
