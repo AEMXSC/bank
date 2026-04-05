@@ -30,16 +30,16 @@
   --text-light: var(--brand-light-text-color, #ffffff);
   --text-disabled:rgb(113, 113, 113);
   --link-color: var(--brand-link-color, #131313);
-  --link-hover-color: var(--brand-link-hover-color, #ffc719);
-  --main-accent-color: var(--brand-theme-color, #ffc719);
+  --link-hover-color: var(--brand-link-hover-color, #026169);
+  --main-accent-color: var(--brand-theme-color, #026169);
 
 
   --dark-color-opacity: rgba(0, 0, 0, 0.55);
   --light-color-opacity: rgba(255, 255, 255, 0.5);
   --tab-background-color: rgba(0, 0, 0, 0.02);
   /* brand-scoped header/footer variables with sensible defaults */
-  --nav-background-color: var(--brand-nav-background-color, #0000008c);
-  --nav-text-color: var(--brand-nav-text-color, #ffffff);
+  --nav-background-color: var(--brand-nav-background-color, #ffffff);
+  --nav-text-color: var(--brand-nav-text-color, #2c2c2c);
   --footer-background-color: var(--brand-footer-background-color, #000);
   --footer-text-color: var(--brand-footer-text-color, #ffffff);
   
@@ -319,6 +319,7 @@ body {
 body.appear {
   display: block;
   overflow-x: hidden;
+  padding-top: var(--nav-height);
 }
 body.gray-theme {
   filter: grayscale(100%);
@@ -344,52 +345,6 @@ body.green-theme {
   --main-accent-color: #00c4ff;
   --nav-text-color:#000000;
 }
-/*brand header footer brand themes*/
-body header .nav-wrapper{
-  background-color: var(--nav-background-color);
-  color: var(--nav-text-color);
-}
-body footer {
-  background-color: var(--footer-background-color);
-  color: var(--footer-text-color);
-}
-/*theme header-footer*/
-body.red-theme header .nav-wrapper,
-body.red-theme footer {
-  background-color: var(--main-accent-color);
-  color: var(--text-light);
-}
-
-body.blue-theme header .nav-wrapper,
-body.blue-theme footer {
-  background-color: var(--main-accent-color);
-  color: var(--text-light);
-}
-body.green-theme header .nav-wrapper,
-body.green-theme footer {
-  background-color: var(--main-accent-color);
-  color: var(--text-light);
-}
-
-body.red-theme header .nav-wrapper nav .nav-sections ul > li > a::before{
-  background: var(--text-light);
-}
-body.red-theme header .nav-wrapper nav .nav-sections ul > li > a:hover{
-  color: var(--text-light);
-}
-body.green-theme header .nav-wrapper nav .nav-sections ul > li > a::before{
-  background: var(--text-light);
-}
-body.green-theme header .nav-wrapper nav .nav-sections ul > li > a:hover{
-  color: var(--text-light);
-}
-body.blue-theme header .nav-wrapper nav .nav-sections ul > li > a::before{
-  background: var(--text-light);
-}
-body.blue-theme header .nav-wrapper nav .nav-sections ul > li > a:hover{
-  color: var(--text-light);
-}
-/*theme header-footer*/
 header {
   height: var(--nav-height);
   min-height: 90px;
@@ -970,7 +925,7 @@ table {
 }
 
 .cta-button a.button:hover {
-  background-color: transparent !important;
+  background-color: var(--text-light) !important;
   color: var(--main-accent-color) !important;
   border-color: var(--main-accent-color) !important;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);

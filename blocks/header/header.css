@@ -1,6 +1,6 @@
 /* header and nav layout */
 header .nav-wrapper {
-  background-color: var(--dark-color-opacity);
+  background-color: white;
   width: 100%;
   z-index: 2;
   position: fixed;
@@ -209,7 +209,7 @@ header nav .nav-sections ul > li {
 
 header nav .nav-sections ul > li > a {  
   font-size: 18px;
-  color: var(--nav-text-color);
+  color: #2c2c2c;
   text-decoration: none;
   font-family: var(--body-font-family);
 }

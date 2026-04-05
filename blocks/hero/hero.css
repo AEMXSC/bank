@@ -23,14 +23,22 @@
 .hero h3,
 .hero h4,
 .hero h5,
-.hero h6,
+.hero h6 {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: var(--text-light);
+  text-shadow: 1px 1px #333;
+  text-align: center;
+  font-family: var(--black-font-family);
+}
+
 .hero p {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   color: var(--text-light);
   text-align: center;
-  font-family: var(--black-font-family);
 }
 
 /* Special underline (only for h1 by default) */
@@ -76,31 +84,54 @@
 --------------------------- */
 
 
+.hero-wrapper .button-container a.button {
+  color: var(--text-light);
+}
+
+.hero-wrapper .button-container a.button::after {
+  color: var(--text-light);
+}
+
 /* Primary CTA */
 .hero-wrapper .button-container.cta-button a.button {
+  display: inline-block;
+  padding: 12px 24px;
+  margin: 10px 5px;
   background-color: var(--main-accent-color);
+  color: var(--text-light);
+  text-decoration: none;
   border: 2px solid var(--main-accent-color);
+  border-radius: 4px;
+  font-family: var(--heading-font-family);
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
 .hero-wrapper .button-container.cta-button a.button::after {
   content: "\f105";
   font-family: 'Font Awesome 5 Solid';
+  color: var(--text-light);
   font-size: 20px;
   margin-left: 8px;
   transition: all 0.3s ease;
-  color: var(--text-light);
 }
 
 .hero-wrapper .button-container.cta-button a.button:hover {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: var(--text-light) !important;
-  border-color: var(--text-light) !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  border-color: var(--text-light);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
 }
 
 .hero-wrapper .button-container.cta-button a.button:hover::after {
-  color: var(--text-light) !important;
+  color: var(--text-light);
   transform: translateX(2px);
 }
 

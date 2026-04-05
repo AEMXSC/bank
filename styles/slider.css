@@ -155,6 +155,11 @@ html[dir="rtl"] .carousel .button-container .prev {
   transform: translateY(-50%) scale(1.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
+
+.carousel .button-container .prev:hover img,
+.carousel .button-container .next:hover img {
+  filter: brightness(0) invert(1);
+}
   
 .carousel .cards-card-body {
   font-size: 14px;
