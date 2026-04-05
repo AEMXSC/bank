@@ -1,0 +1,125 @@
+.dynamic-media-video {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  position: relative;
+}
+
+/* 16:9 responsive container */
+.dynamic-media-video .dm-video-player-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  height: 0;
+  overflow: hidden;
+  background: #000;
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0 0 0 / 25%);
+}
+
+/* DM player container inside the wrapper */
+.dynamic-media-video .dm-video-player {
+  position: absolute;
+  inset: 0;
+}
+
+/* If the DM viewer renders an iframe or video, it will inherit these */
+.dynamic-media-video iframe,
+.dynamic-media-video video {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+/* Loading state driven by data attributes */
+.dynamic-media-video[data-video-loaded='loading'] .dm-video-player-wrapper {
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  position: relative;
+}
+
+.dynamic-media-video[data-video-loaded='loading'] .dm-video-player-wrapper::after {
+  content: 'Loading video…';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4b5563;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Error state driven by data attributes */
+.dynamic-media-video[data-video-loaded='error'] .dm-video-player-wrapper {
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+}
+
+.dynamic-media-video[data-video-loaded='error'] .dm-video-player-wrapper::after {
+  content: 'Failed to load video';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b91c1c;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Chapters UI */
+.dynamic-media-video .dm-video-chapters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  justify-content: flex-start;
+}
+
+.dynamic-media-video .dm-video-chapter {
+  border: none;
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  background: rgba(15 23 42 / 8%);
+  color: #111827;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.dynamic-media-video .dm-video-chapter:hover {
+  background: rgba(37 99 235 / 12%);
+  box-shadow: 0 2px 6px rgba(37 99 235 / 18%);
+  transform: translateY(-1px);
+}
+
+.dynamic-media-video .dm-video-chapter:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.dynamic-media-video[data-video-loaded='error'] .dm-video-chapters {
+  display: none;
+}
+
+/* Compact mode on small screens */
+@media (max-width: 768px) {
+  .dynamic-media-video .dm-video-player-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0 0 0 / 18%);
+  }
+
+  .dynamic-media-video .dm-video-chapter {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+  }
+}
+
+/* Legacy wrapper support */
+.dynamic-media-video-wrapper {
+  text-align: center;
+  width: 100%;
+}
