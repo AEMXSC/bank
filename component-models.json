@@ -6621,7 +6621,7 @@
         "valueType": "string",
         "name": "subtitle",
         "label": "Subtitle",
-        "value": "Search for healthcare providers in your area"
+        "value": "Search for a healthcare provider in your area"
       },
       {
         "component": "select",
