@@ -1,0 +1,35 @@
+{
+  "definitions": [
+    {
+      "title": "Promotion",
+      "id": "promotion",
+      "plugins": {
+        "xwalk": {
+          "page": {
+            "resourceType": "core/franklin/components/block/v1/block",
+            "template": {
+              "name": "Promotion",
+              "model": "promotion"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "promotion",
+      "fields": [
+        {
+          "component": "text",
+          "name": "mbox",
+          "label": "Target Mbox Name",
+          "valueType": "string",
+          "value": "global",
+          "description": "The Adobe Target mbox name that contains the personalized offer activity."
+        }
+      ]
+    }
+  ],
+  "filters": []
+}

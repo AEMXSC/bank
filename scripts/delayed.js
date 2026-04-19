@@ -17,13 +17,12 @@ window.targetGlobalSettings = {
 };
 
 function loadAT() {
-  function targetPageParams() {
+  window.targetPageParams = function targetPageParams() {
     return {
-      "at_property": "549d426b-0bcc-be60-ce27-b9923bfcad4f"
+      at_property: '549d426b-0bcc-be60-ce27-b9923bfcad4f',
     };
-  }
-    loadScript(window.hlx.codeBasePath+'/scripts/at-lsig.js');
-  
+  };
+  loadScript(`${window.hlx.codeBasePath}/scripts/at-lsig.js`);
 }
 // Adobe Target - end
 
