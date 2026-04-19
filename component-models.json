@@ -6717,5 +6717,18 @@
         "condition": { "==": [{ "var": "enableSubmitAction" }, true] }
       }
     ]
+  },
+  {
+    "id": "promotion",
+    "fields": [
+      {
+        "component": "text",
+        "name": "mbox",
+        "label": "Target Mbox Name",
+        "valueType": "string",
+        "value": "global",
+        "description": "The Adobe Target mbox name that contains the personalized offer activity."
+      }
+    ]
   }
 ]
