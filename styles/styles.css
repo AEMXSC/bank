@@ -23,7 +23,7 @@
 
 :root {
   /* colors */
-  --background-color: var(--brand-background-color, #ffffff);
+  --background-color: red;
   --dark-color: var(--brand-dark-color, #131313);
   --light-color: var(--brand-light-color, #dcdcdc);
   --text-color: var(--brand-text-color, #131313);
