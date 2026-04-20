@@ -6,9 +6,9 @@ import { getHostname, mapAemPathToSitePath } from '../../scripts/utils.js';
  * Constants
  * ──────────────────────────────────────────── */
 
-const TARGET_TENANT = 'aemdevlabs8';
-const TARGET_CLIENT_CODE = 'aemdevlabs8';
 const DEFAULT_MBOX = 'global';
+const ATJS_POLL_INTERVAL_MS = 500;
+const ATJS_MAX_WAIT_MS = 10000;
 
 const CF_CONFIG = {
   WRAPPER_SERVICE_URL: 'https://3635370-refdemoapigateway-stage.adobeioruntime.net/api/v1/web/ref-demo-api-gateway/fetch-cf',
@@ -16,40 +16,9 @@ const CF_CONFIG = {
 };
 
 /* ────────────────────────────────────────────
- * Target helpers
- * ──────────────────────────────────────────── */
-
-function getTargetSessionId() {
-  let id = sessionStorage.getItem('target_session_id');
-  if (!id) {
-    id = crypto.randomUUID
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-    sessionStorage.setItem('target_session_id', id);
-  }
-  return id;
-}
-
-function getProfileParameters() {
-  const params = {};
-  try {
-    const stored = localStorage.getItem('userProfile');
-    if (stored) Object.assign(params, JSON.parse(stored));
-  } catch { /* empty */ }
-
-  const url = new URL(window.location.href);
-  url.searchParams.forEach((value, key) => {
-    if (key.startsWith('profile.')) {
-      params[key.replace('profile.', '')] = value;
-    }
-  });
-  return params;
-}
-
-/* ────────────────────────────────────────────
- * Parsers – normalise both "exported CF" and
- * "flat offer" JSON shapes from Target
- * (mirrors the mobile app's TargetService)
+ * Normalise Target offer JSON into the same
+ * CF item shape used by AEM GraphQL
+ * (handles both "exported CF" and "flat offer")
  * ──────────────────────────────────────────── */
 
 function normaliseOfferToCfShape(data) {
@@ -67,9 +36,8 @@ function normaliseOfferToCfShape(data) {
 }
 
 /* ────────────────────────────────────────────
- * Content Fragment fetch (reuses the same
- * GraphQL + API-gateway pattern from the
- * content-fragment block)
+ * Content Fragment fetch (same GraphQL +
+ * API-gateway pattern as the content-fragment block)
  * ──────────────────────────────────────────── */
 
 async function fetchContentFragment(contentPath, variation, isAuthor, aemAuthorUrl, aemPublishUrl) {
@@ -102,15 +70,36 @@ async function fetchContentFragment(contentPath, variation, isAuthor, aemAuthorU
 }
 
 /* ────────────────────────────────────────────
- * Target offer fetch – at.js first, REST fallback
+ * at.js – wait for it to load (it comes via
+ * delayed.js ~3 s after page load), then use
+ * getOffer() so Target gets full page context,
+ * ECID visitor identity and browsing history
+ * needed for page-URL-based audiences.
  * ──────────────────────────────────────────── */
 
-function fetchViaAtJs(mbox, profileParams) {
-  const target = window.adobe?.target;
-  if (!target?.getOffer) return null;
-
+function waitForAtJs() {
   return new Promise((resolve) => {
-    target.getOffer({
+    if (window.adobe?.target?.getOffer) {
+      resolve(true);
+      return;
+    }
+
+    const start = Date.now();
+    const timer = setInterval(() => {
+      if (window.adobe?.target?.getOffer) {
+        clearInterval(timer);
+        resolve(true);
+      } else if (Date.now() - start > ATJS_MAX_WAIT_MS) {
+        clearInterval(timer);
+        resolve(false);
+      }
+    }, ATJS_POLL_INTERVAL_MS);
+  });
+}
+
+function callGetOffer(mbox, profileParams) {
+  return new Promise((resolve) => {
+    window.adobe.target.getOffer({
       mbox,
       params: profileParams,
       success(response) {
@@ -127,26 +116,32 @@ function fetchViaAtJs(mbox, profileParams) {
   });
 }
 
-async function fetchViaRestApi(mbox, profileParams) {
-  const sessionId = getTargetSessionId();
-  const url = `https://${TARGET_TENANT}.tt.omtrdc.net/rest/v1/mbox/${sessionId}?client=${TARGET_CLIENT_CODE}`;
+function getProfileParameters() {
+  const params = {};
+  try {
+    const stored = localStorage.getItem('userProfile');
+    if (stored) Object.assign(params, JSON.parse(stored));
+  } catch { /* empty */ }
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mbox, mboxParameters: profileParams }),
+  const url = new URL(window.location.href);
+  url.searchParams.forEach((value, key) => {
+    if (key.startsWith('profile.')) {
+      params[key.replace('profile.', '')] = value;
+    }
   });
-
-  if (!res.ok) return null;
-  const json = await res.json();
-  const content = json?.content;
-  if (!content) return null;
-  return JSON.parse(content);
+  return params;
 }
 
-async function fetchTargetOffer(mbox, profileParams) {
-  let raw = await fetchViaAtJs(mbox, profileParams);
-  if (!raw) raw = await fetchViaRestApi(mbox, profileParams);
+async function fetchTargetOffer(mbox) {
+  const atjsReady = await waitForAtJs();
+  if (!atjsReady) {
+    // eslint-disable-next-line no-console
+    console.warn('Promotion block: at.js did not load within timeout – skipping Target personalisation');
+    return null;
+  }
+
+  const profileParams = getProfileParameters();
+  const raw = await callGetOffer(mbox, profileParams);
   if (!raw) return null;
   return normaliseOfferToCfShape(raw);
 }
@@ -241,6 +236,14 @@ async function renderCard(block, cfItem, isAuthor) {
 
 /* ────────────────────────────────────────────
  * Block decorator
+ *
+ * Flow on publish/live:
+ *  1. Render the author-selected default CF immediately
+ *  2. In the background, wait for at.js → call getOffer()
+ *  3. If Target returns a personalized offer, swap the card
+ *
+ * This avoids a blank gap while at.js loads (~3 s)
+ * and still delivers personalization once available.
  * ──────────────────────────────────────────── */
 
 export default async function decorate(block) {
@@ -270,33 +273,24 @@ export default async function decorate(block) {
     return;
   }
 
-  const spinner = document.createElement('div');
-  spinner.className = 'promotion-loading';
-  block.appendChild(spinner);
-
   try {
-    if (isAuthor) {
-      const cfItem = await fetchContentFragment(contentPath, variation, true, aemAuthorUrl, aemPublishUrl);
-      if (cfItem) {
-        await renderCard(block, cfItem, true);
-      } else {
-        block.innerHTML = '';
+    const cfItem = await fetchContentFragment(contentPath, variation, isAuthor, aemAuthorUrl, aemPublishUrl);
+
+    if (cfItem) {
+      await renderCard(block, cfItem, isAuthor);
+    }
+
+    if (isAuthor) return;
+
+    fetchTargetOffer(mboxName).then(async (targetItem) => {
+      if (targetItem) {
+        await renderCard(block, targetItem, false);
+        block.classList.add('promotion-personalised');
       }
-      return;
-    }
-
-    const profileParams = getProfileParameters();
-    const [cfItem, targetItem] = await Promise.all([
-      fetchContentFragment(contentPath, variation, false, aemAuthorUrl, aemPublishUrl),
-      fetchTargetOffer(mboxName, profileParams).catch(() => null),
-    ]);
-
-    const displayItem = targetItem || cfItem;
-    if (displayItem) {
-      await renderCard(block, displayItem, false);
-    } else {
-      block.innerHTML = '';
-    }
+    }).catch((err) => {
+      // eslint-disable-next-line no-console
+      console.warn('Promotion block: Target personalisation failed, keeping default CF', err);
+    });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('Promotion block: error', err);

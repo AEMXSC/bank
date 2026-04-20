@@ -36,7 +36,13 @@
   overflow: hidden;
   background: var(--background-color, #fff);
   box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
+  transition: box-shadow 0.25s ease, transform 0.25s ease, opacity 0.4s ease;
+  animation: promo-fade-in 0.4s ease both;
+}
+
+@keyframes promo-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .promotion-wrapper .promotion .promotion-card:hover {
