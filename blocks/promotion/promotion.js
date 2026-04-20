@@ -256,8 +256,8 @@ async function fetchTargetOffer(mbox) {
  * Render a promotion card from CF-shaped data
  * ──────────────────────────────────────────── */
 
-async function renderCard(block, cfItem, isAuthor, source = 'default') {
-  log(`Rendering card [${source}]:`, cfItem?.title);
+async function renderCard(block, cfItem, isAuthor, source = 'default', displayStyle = '', alignment = '') {
+  log(`Rendering card [${source}]:`, cfItem?.title, { displayStyle, alignment });
 
   const imgUrl = isAuthor
     ? (cfItem.bannerimage?._authorUrl || cfItem.bannerimage?._publishUrl)
@@ -286,7 +286,9 @@ async function renderCard(block, cfItem, isAuthor, source = 'default') {
   log(`  CTA: "${cfItem.ctalabel}" → ${ctaHref}`);
 
   const card = document.createElement('div');
-  card.className = 'promotion-card';
+  const cardClasses = ['promotion-card'];
+  if (displayStyle) cardClasses.push(displayStyle);
+  card.className = cardClasses.join(' ');
 
   if (imgUrl) {
     const imgWrap = document.createElement('div');
@@ -299,8 +301,14 @@ async function renderCard(block, cfItem, isAuthor, source = 'default') {
     card.appendChild(imgWrap);
   }
 
+  if (displayStyle && imgUrl) {
+    card.style.backgroundImage = `url(${imgUrl})`;
+  }
+
   const content = document.createElement('div');
-  content.className = 'promotion-content';
+  const contentClasses = ['promotion-content'];
+  if (alignment) contentClasses.push(alignment);
+  content.className = contentClasses.join(' ');
 
   if (cfItem.title) {
     const h3 = document.createElement('h3');
@@ -362,10 +370,12 @@ export default async function decorate(block) {
   const contentPath = block.querySelector(':scope div:nth-child(1) > div a')?.textContent?.trim()
     || block.querySelector(':scope div:nth-child(1) > div')?.textContent?.trim();
   const variation = block.querySelector(':scope div:nth-child(2) > div')?.textContent?.trim()?.toLowerCase()?.replace(' ', '_') || 'master';
-  const mboxName = block.querySelector(':scope div:nth-child(3) > div')?.textContent?.trim() || DEFAULT_MBOX;
+  const displayStyle = block.querySelector(':scope div:nth-child(3) > div')?.textContent?.trim() || '';
+  const alignment = block.querySelector(':scope div:nth-child(4) > div')?.textContent?.trim() || '';
+  const mboxName = block.querySelector(':scope div:nth-child(5) > div')?.textContent?.trim() || DEFAULT_MBOX;
 
   log('========== Promotion block init ==========');
-  log('Config:', { contentPath, variation, mboxName });
+  log('Config:', { contentPath, variation, displayStyle, alignment, mboxName });
 
   block.innerHTML = '';
 
@@ -395,7 +405,7 @@ export default async function decorate(block) {
     const cfItem = await fetchContentFragment(contentPath, variation, isAuthor, aemAuthorUrl, aemPublishUrl);
 
     if (cfItem) {
-      await renderCard(block, cfItem, isAuthor, 'default-CF');
+      await renderCard(block, cfItem, isAuthor, 'default-CF', displayStyle, alignment);
     } else {
       logWarn('Default CF returned null – block will be empty unless Target provides an offer');
     }
@@ -404,7 +414,7 @@ export default async function decorate(block) {
     fetchTargetOffer(mboxName).then(async (targetItem) => {
       if (targetItem) {
         log('🎯 Target returned a personalised offer – swapping card');
-        await renderCard(block, targetItem, false, 'target-personalised');
+        await renderCard(block, targetItem, isAuthor, 'target-personalised', displayStyle, alignment);
         block.classList.add('promotion-personalised');
         log('Card swap complete ✓');
       } else {

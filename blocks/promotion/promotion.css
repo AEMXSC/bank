@@ -160,6 +160,161 @@
   margin-right: auto;
 }
 
+/* ─── Image-left layout ─── */
+.promotion-wrapper .promotion .promotion-card.image-left {
+  flex-direction: row;
+  min-height: 400px;
+  background-size: cover;
+  background-position: left center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.promotion-wrapper .promotion .promotion-card.image-left::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: inherit;
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+}
+
+.promotion-wrapper .promotion .promotion-card.image-left .promotion-image { display: none; }
+
+.promotion-wrapper .promotion .promotion-card.image-left .promotion-content {
+  margin-left: 50%;
+  position: relative;
+  z-index: 2;
+  background: var(--light-color);
+  padding: 3rem;
+}
+
+/* ─── Image-right layout ─── */
+.promotion-wrapper .promotion .promotion-card.image-right {
+  flex-direction: row;
+  min-height: 400px;
+  background-size: cover;
+  background-position: right center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.promotion-wrapper .promotion .promotion-card.image-right::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50%;
+  height: 100%;
+  background: inherit;
+  background-size: cover;
+  background-position: center;
+  z-index: 1;
+}
+
+.promotion-wrapper .promotion .promotion-card.image-right .promotion-image { display: none; }
+
+.promotion-wrapper .promotion .promotion-card.image-right .promotion-content {
+  margin-right: 50%;
+  position: relative;
+  z-index: 2;
+  background: var(--light-color);
+  padding: 3rem;
+}
+
+/* ─── Image-top layout ─── */
+.promotion-wrapper .promotion .promotion-card.image-top {
+  flex-direction: column;
+  min-height: 400px;
+  background-size: contain;
+  background-position: center top;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.promotion-wrapper .promotion .promotion-card.image-top .promotion-image { display: none; }
+
+.promotion-wrapper .promotion .promotion-card.image-top .promotion-content {
+  margin-top: 50%;
+  position: relative;
+  z-index: 2;
+  background: var(--light-color);
+  padding: 3rem;
+  text-align: center;
+  align-items: center;
+}
+
+/* ─── Image-bottom layout ─── */
+.promotion-wrapper .promotion .promotion-card.image-bottom {
+  flex-direction: column;
+  min-height: 400px;
+  background-size: contain;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.promotion-wrapper .promotion .promotion-card.image-bottom .promotion-image { display: none; }
+
+.promotion-wrapper .promotion .promotion-card.image-bottom .promotion-content {
+  margin-bottom: 50%;
+  position: relative;
+  z-index: 2;
+  background: var(--light-color);
+  padding: 3rem;
+  text-align: center;
+  align-items: center;
+}
+
+/* ─── Text colors for image layouts ─── */
+.promotion-wrapper .promotion .promotion-card.image-left .promotion-title,
+.promotion-wrapper .promotion .promotion-card.image-right .promotion-title,
+.promotion-wrapper .promotion .promotion-card.image-top .promotion-title,
+.promotion-wrapper .promotion .promotion-card.image-bottom .promotion-title {
+  color: var(--text-color);
+}
+
+.promotion-wrapper .promotion .promotion-card.image-left .promotion-subtitle,
+.promotion-wrapper .promotion .promotion-card.image-right .promotion-subtitle,
+.promotion-wrapper .promotion .promotion-card.image-top .promotion-subtitle,
+.promotion-wrapper .promotion .promotion-card.image-bottom .promotion-subtitle {
+  color: #666;
+}
+
+/* ─── Text alignment ─── */
+.promotion-wrapper .promotion .promotion-card .promotion-content.text-left {
+  text-align: left;
+  align-items: flex-start;
+}
+
+.promotion-wrapper .promotion .promotion-card .promotion-content.text-left .promotion-title::after {
+  margin-left: 0;
+}
+
+.promotion-wrapper .promotion .promotion-card .promotion-content.text-right {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.promotion-wrapper .promotion .promotion-card .promotion-content.text-right .promotion-title::after {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.promotion-wrapper .promotion .promotion-card .promotion-content.text-center {
+  text-align: center;
+  align-items: center;
+}
+
+.promotion-wrapper .promotion .promotion-card .promotion-content.text-center .promotion-title::after {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* ─── Responsive: stack on smaller screens ─── */
 @media (width < 900px) {
   .promotion-wrapper .promotion .promotion-card {
@@ -175,6 +330,37 @@
   .promotion-wrapper .promotion .promotion-card .promotion-content {
     padding: 2rem 1.5rem;
   }
+
+  .promotion-wrapper .promotion .promotion-card.image-left,
+  .promotion-wrapper .promotion .promotion-card.image-right,
+  .promotion-wrapper .promotion .promotion-card.image-top,
+  .promotion-wrapper .promotion .promotion-card.image-bottom {
+    flex-direction: column;
+    background-position: center top;
+  }
+
+  .promotion-wrapper .promotion .promotion-card.image-left::before,
+  .promotion-wrapper .promotion .promotion-card.image-right::before {
+    width: 100%;
+    height: 250px;
+    position: relative;
+  }
+
+  .promotion-wrapper .promotion .promotion-card.image-left .promotion-content,
+  .promotion-wrapper .promotion .promotion-card.image-right .promotion-content {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    align-items: center;
+  }
+
+  .promotion-wrapper .promotion .promotion-card.image-top .promotion-content,
+  .promotion-wrapper .promotion .promotion-card.image-bottom .promotion-content {
+    padding: 2rem 1.5rem;
+    text-align: center;
+    align-items: center;
+  }
 }
 
 @media (width < 600px) {
@@ -188,5 +374,18 @@
 
   .promotion-wrapper .promotion .promotion-card .promotion-image {
     max-height: 200px;
+  }
+
+  .promotion-wrapper .promotion .promotion-card.image-left::before,
+  .promotion-wrapper .promotion .promotion-card.image-right::before {
+    height: 200px;
+  }
+
+  .promotion-wrapper .promotion .promotion-card.image-top .promotion-content {
+    margin-top: 200px;
+  }
+
+  .promotion-wrapper .promotion .promotion-card.image-bottom .promotion-content {
+    margin-bottom: 200px;
   }
 }

@@ -6740,12 +6740,34 @@
         "condition": { "==": [ { "var": "__alwaysFalse" }, true ] }
       },
       {
+        "component": "select",
+        "name": "displaystyle",
+        "label": "Display Style",
+        "options": [
+          { "name": "Default (card)", "value": "" },
+          { "name": "Image Left", "value": "image-left" },
+          { "name": "Image Right", "value": "image-right" },
+          { "name": "Image Top", "value": "image-top" },
+          { "name": "Image Bottom", "value": "image-bottom" }
+        ]
+      },
+      {
+        "component": "select",
+        "name": "alignment",
+        "label": "Text Alignment",
+        "options": [
+          { "name": "Center", "value": "text-center" },
+          { "name": "Left", "value": "text-left" },
+          { "name": "Right", "value": "text-right" }
+        ]
+      },
+      {
         "component": "text",
         "name": "mbox",
         "label": "Target Mbox Name",
         "valueType": "string",
-        "value": "global",
-        "description": "The Adobe Target mbox name for personalization. Leave as 'global' for the default activity."
+        "value": "target-global-mbox",
+        "description": "The Adobe Target mbox name for personalization. Leave as 'target-global-mbox' for page-level activities."
       }
     ]
   }
