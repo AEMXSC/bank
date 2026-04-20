@@ -6722,12 +6722,30 @@
     "id": "promotion",
     "fields": [
       {
+        "component": "aem-content-fragment",
+        "name": "reference",
+        "label": "Default Content Fragment",
+        "valueType": "string",
+        "required": true,
+        "variationName": "contentFragmentVariation",
+        "description": "The default content fragment to display. At runtime, Adobe Target may replace this with a personalized offer."
+      },
+      {
+        "component": "text",
+        "name": "contentFragmentVariation",
+        "label": "Selected Variation",
+        "value": "",
+        "valueType": "string",
+        "description": "Persisted variation for publish; leave empty for master.",
+        "condition": { "==": [ { "var": "__alwaysFalse" }, true ] }
+      },
+      {
         "component": "text",
         "name": "mbox",
         "label": "Target Mbox Name",
         "valueType": "string",
         "value": "global",
-        "description": "The Adobe Target mbox name that contains the personalized offer activity."
+        "description": "The Adobe Target mbox name for personalization. Leave as 'global' for the default activity."
       }
     ]
   }
