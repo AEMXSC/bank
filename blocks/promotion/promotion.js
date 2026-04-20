@@ -306,7 +306,7 @@ export default async function decorate(block) {
       await renderCard(block, cfItem, isAuthor);
     }
 
-    if (isAuthor) return;
+    // if (isAuthor) return;
 
     fetchTargetOffer(mboxName).then(async (targetItem) => {
       if (targetItem) {
