@@ -1,4 +1,4 @@
-import { getMetadata } from '../../scripts/aem.js';
+import { getMetadata, loadScript } from '../../scripts/aem.js';
 import { isAuthorEnvironment } from '../../scripts/scripts.js';
 import { getHostname, mapAemPathToSitePath } from '../../scripts/utils.js';
 
@@ -7,8 +7,9 @@ import { getHostname, mapAemPathToSitePath } from '../../scripts/utils.js';
  * ──────────────────────────────────────────── */
 
 const DEFAULT_MBOX = 'target-global-mbox';
-const ATJS_POLL_INTERVAL_MS = 500;
+const ATJS_POLL_INTERVAL_MS = 200;
 const ATJS_MAX_WAIT_MS = 10000;
+const AT_PROPERTY = '549d426b-0bcc-be60-ce27-b9923bfcad4f';
 
 const CF_CONFIG = {
   WRAPPER_SERVICE_URL: 'https://3635370-refdemoapigateway-stage.adobeioruntime.net/api/v1/web/ref-demo-api-gateway/fetch-cf',
@@ -100,8 +101,30 @@ async function fetchContentFragment(contentPath, variation, isAuthor, aemAuthorU
  * needed for page-URL-based audiences.
  * ──────────────────────────────────────────── */
 
+/**
+ * Eagerly load at.js if not already loaded (instead of waiting
+ * for delayed.js ~3 s later). Sets the required globals first.
+ */
+function ensureAtJsLoading() {
+  if (window.adobe?.target?.getOffers) return;
+  if (document.querySelector('script[src*="at-lsig"]')) return;
+
+  log('Eagerly loading at.js from promotion block');
+
+  if (!window.targetGlobalSettings) {
+    window.targetGlobalSettings = { bodyHidingEnabled: false };
+  }
+  if (!window.targetPageParams) {
+    window.targetPageParams = () => ({ at_property: AT_PROPERTY });
+  }
+
+  loadScript(`${window.hlx.codeBasePath}/scripts/at-lsig.js`);
+}
+
 function waitForAtJs() {
-  log('Waiting for at.js to load...');
+  log('Waiting for at.js to initialise...');
+  ensureAtJsLoading();
+
   return new Promise((resolve) => {
     if (window.adobe?.target?.getOffers) {
       log('at.js already available');
