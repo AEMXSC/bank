@@ -6,7 +6,7 @@ import { getHostname, mapAemPathToSitePath } from '../../scripts/utils.js';
  * Constants
  * ──────────────────────────────────────────── */
 
-const DEFAULT_MBOX = 'global';
+const DEFAULT_MBOX = 'target-global-mbox';
 const ATJS_POLL_INTERVAL_MS = 500;
 const ATJS_MAX_WAIT_MS = 10000;
 
@@ -79,14 +79,14 @@ async function fetchContentFragment(contentPath, variation, isAuthor, aemAuthorU
 
 function waitForAtJs() {
   return new Promise((resolve) => {
-    if (window.adobe?.target?.getOffer) {
+    if (window.adobe?.target?.getOffers) {
       resolve(true);
       return;
     }
 
     const start = Date.now();
     const timer = setInterval(() => {
-      if (window.adobe?.target?.getOffer) {
+      if (window.adobe?.target?.getOffers) {
         clearInterval(timer);
         resolve(true);
       } else if (Date.now() - start > ATJS_MAX_WAIT_MS) {
@@ -97,23 +97,23 @@ function waitForAtJs() {
   });
 }
 
-function callGetOffer(mbox, profileParams) {
-  return new Promise((resolve) => {
-    window.adobe.target.getOffer({
-      mbox,
-      params: profileParams,
-      success(response) {
-        try {
-          const action = Array.isArray(response) ? response[0] : response;
-          const raw = action?.content?.[0] ?? action?.content ?? action;
-          const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-          resolve(parsed);
-        } catch { resolve(null); }
-      },
-      error() { resolve(null); },
-      timeout: 5000,
-    });
-  });
+/**
+ * Extract the first JSON offer content from an at.js getOffers() response.
+ * Checks both pageLoad and named mboxes.
+ */
+function extractJsonOffer(response) {
+  const pageOpts = response?.execute?.pageLoad?.options || [];
+  const jsonPageOffer = pageOpts.find((o) => o.type === 'json');
+  if (jsonPageOffer?.content) return jsonPageOffer.content;
+
+  const mboxes = response?.execute?.mboxes || [];
+  for (const mbox of mboxes) {
+    const opts = mbox.options || [];
+    const jsonOffer = opts.find((o) => o.type === 'json');
+    if (jsonOffer?.content) return jsonOffer.content;
+  }
+
+  return null;
 }
 
 function getProfileParameters() {
@@ -141,9 +141,35 @@ async function fetchTargetOffer(mbox) {
   }
 
   const profileParams = getProfileParameters();
-  const raw = await callGetOffer(mbox, profileParams);
-  if (!raw) return null;
-  return normaliseOfferToCfShape(raw);
+
+  try {
+    const response = await window.adobe.target.getOffers({
+      request: {
+        execute: {
+          pageLoad: {
+            parameters: profileParams,
+          },
+          mboxes: [{
+            index: 0,
+            name: mbox,
+            parameters: profileParams,
+          }],
+        },
+      },
+      timeout: 5000,
+    });
+
+    const raw = extractJsonOffer(response);
+    if (!raw) return null;
+
+    window.adobe.target.applyOffers({ response });
+
+    return normaliseOfferToCfShape(raw);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn('Promotion block: getOffers failed', err);
+    return null;
+  }
 }
 
 /* ────────────────────────────────────────────
