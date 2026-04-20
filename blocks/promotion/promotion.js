@@ -290,7 +290,9 @@ async function renderCard(block, cfItem, isAuthor, source = 'default', displaySt
   if (displayStyle) cardClasses.push(displayStyle);
   card.className = cardClasses.join(' ');
 
-  if (imgUrl) {
+  if (imgUrl && displayStyle) {
+    card.style.backgroundImage = `url(${imgUrl})`;
+  } else if (imgUrl) {
     const imgWrap = document.createElement('div');
     imgWrap.className = 'promotion-image';
     const img = document.createElement('img');
@@ -299,10 +301,6 @@ async function renderCard(block, cfItem, isAuthor, source = 'default', displaySt
     img.loading = 'lazy';
     imgWrap.appendChild(img);
     card.appendChild(imgWrap);
-  }
-
-  if (displayStyle && imgUrl) {
-    card.style.backgroundImage = `url(${imgUrl})`;
   }
 
   const content = document.createElement('div');
