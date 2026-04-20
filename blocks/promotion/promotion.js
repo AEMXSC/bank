@@ -15,6 +15,13 @@ const CF_CONFIG = {
   GRAPHQL_QUERY: '/graphql/execute.json/ref-demo-eds/CTAByPath',
 };
 
+// eslint-disable-next-line no-console
+const log = (...args) => console.log('[Promotion]', ...args);
+// eslint-disable-next-line no-console
+const logWarn = (...args) => console.warn('[Promotion]', ...args);
+// eslint-disable-next-line no-console
+const logError = (...args) => console.error('[Promotion]', ...args);
+
 /* ────────────────────────────────────────────
  * Normalise Target offer JSON into the same
  * CF item shape used by AEM GraphQL
@@ -23,9 +30,12 @@ const CF_CONFIG = {
 
 function normaliseOfferToCfShape(data) {
   const item = data?.data?.ctaByPath?.item;
-  if (item) return item;
+  if (item) {
+    log('Normalised offer → CF export shape, title:', item.title);
+    return item;
+  }
 
-  return {
+  const flat = {
     title: data?.offer || data?.title || '',
     subtitle: data?.subtitle || '',
     description: data?.description ? { plaintext: data.description } : null,
@@ -33,6 +43,8 @@ function normaliseOfferToCfShape(data) {
     ctalabel: data?.ctalabel || '',
     ctaurl: data?.ctaurl || null,
   };
+  log('Normalised offer → flat shape, title:', flat.title);
+  return flat;
 }
 
 /* ────────────────────────────────────────────
@@ -41,6 +53,8 @@ function normaliseOfferToCfShape(data) {
  * ──────────────────────────────────────────── */
 
 async function fetchContentFragment(contentPath, variation, isAuthor, aemAuthorUrl, aemPublishUrl) {
+  log('Fetching default CF:', { contentPath, variation, isAuthor });
+
   const requestConfig = isAuthor
     ? {
       url: `${aemAuthorUrl}${CF_CONFIG.GRAPHQL_QUERY};path=${contentPath};variation=${variation};ts=${Date.now()}`,
@@ -58,28 +72,39 @@ async function fetchContentFragment(contentPath, variation, isAuthor, aemAuthorU
       }),
     };
 
+  log('CF request →', requestConfig.method, requestConfig.url);
+
   const res = await fetch(requestConfig.url, {
     method: requestConfig.method,
     headers: requestConfig.headers,
     ...(requestConfig.body && { body: requestConfig.body }),
   });
 
-  if (!res.ok) return null;
+  log('CF response status:', res.status);
+
+  if (!res.ok) {
+    logWarn('CF fetch failed with status', res.status);
+    return null;
+  }
   const json = await res.json();
-  return json?.data?.ctaByPath?.item || null;
+  const item = json?.data?.ctaByPath?.item || null;
+  log('CF item resolved:', item ? `"${item.title}"` : '(null)');
+  return item;
 }
 
 /* ────────────────────────────────────────────
  * at.js – wait for it to load (it comes via
  * delayed.js ~3 s after page load), then use
- * getOffer() so Target gets full page context,
+ * getOffers() so Target gets full page context,
  * ECID visitor identity and browsing history
  * needed for page-URL-based audiences.
  * ──────────────────────────────────────────── */
 
 function waitForAtJs() {
+  log('Waiting for at.js to load...');
   return new Promise((resolve) => {
     if (window.adobe?.target?.getOffers) {
+      log('at.js already available');
       resolve(true);
       return;
     }
@@ -88,9 +113,11 @@ function waitForAtJs() {
     const timer = setInterval(() => {
       if (window.adobe?.target?.getOffers) {
         clearInterval(timer);
+        log(`at.js ready after ${Date.now() - start}ms`);
         resolve(true);
       } else if (Date.now() - start > ATJS_MAX_WAIT_MS) {
         clearInterval(timer);
+        logWarn(`at.js did not load within ${ATJS_MAX_WAIT_MS}ms timeout`);
         resolve(false);
       }
     }, ATJS_POLL_INTERVAL_MS);
@@ -102,17 +129,31 @@ function waitForAtJs() {
  * Checks both pageLoad and named mboxes.
  */
 function extractJsonOffer(response) {
+  log('Extracting JSON offer from getOffers response...');
+
   const pageOpts = response?.execute?.pageLoad?.options || [];
+  log(`  pageLoad options: ${pageOpts.length}`, pageOpts.map((o) => o.type));
   const jsonPageOffer = pageOpts.find((o) => o.type === 'json');
-  if (jsonPageOffer?.content) return jsonPageOffer.content;
+  if (jsonPageOffer?.content) {
+    log('  ✓ Found JSON offer in pageLoad');
+    log('  Content keys:', Object.keys(jsonPageOffer.content));
+    return jsonPageOffer.content;
+  }
 
   const mboxes = response?.execute?.mboxes || [];
+  log(`  Named mboxes in response: ${mboxes.length}`, mboxes.map((m) => m.name));
   for (const mbox of mboxes) {
     const opts = mbox.options || [];
     const jsonOffer = opts.find((o) => o.type === 'json');
-    if (jsonOffer?.content) return jsonOffer.content;
+    if (jsonOffer?.content) {
+      log(`  ✓ Found JSON offer in named mbox "${mbox.name}"`);
+      log('  Content keys:', Object.keys(jsonOffer.content));
+      return jsonOffer.content;
+    }
   }
 
+  logWarn('  ✗ No JSON offer found in pageLoad or named mboxes');
+  log('  Full response structure:', JSON.stringify(response, null, 2).substring(0, 500));
   return null;
 }
 
@@ -129,45 +170,61 @@ function getProfileParameters() {
       params[key.replace('profile.', '')] = value;
     }
   });
+  log('Profile parameters:', Object.keys(params).length ? params : '(none)');
   return params;
 }
 
 async function fetchTargetOffer(mbox) {
+  log('Starting Target offer fetch, mbox:', mbox);
+
   const atjsReady = await waitForAtJs();
   if (!atjsReady) {
-    // eslint-disable-next-line no-console
-    console.warn('Promotion block: at.js did not load within timeout – skipping Target personalisation');
+    logWarn('at.js did not load – skipping Target personalisation');
     return null;
   }
 
   const profileParams = getProfileParameters();
+  const isGlobalMbox = !mbox || mbox === 'target-global-mbox';
+
+  const executeRequest = {};
+  if (isGlobalMbox) {
+    executeRequest.pageLoad = { parameters: profileParams };
+    log('Requesting pageLoad offers (global mbox)');
+  } else {
+    executeRequest.pageLoad = { parameters: profileParams };
+    executeRequest.mboxes = [{ index: 0, name: mbox, parameters: profileParams }];
+    log('Requesting pageLoad + named mbox:', mbox);
+  }
 
   try {
+    log('Calling adobe.target.getOffers()...', {
+      pageLoad: true,
+      namedMbox: isGlobalMbox ? '(none – global)' : mbox,
+      paramKeys: Object.keys(profileParams),
+    });
+
     const response = await window.adobe.target.getOffers({
-      request: {
-        execute: {
-          pageLoad: {
-            parameters: profileParams,
-          },
-          mboxes: [{
-            index: 0,
-            name: mbox,
-            parameters: profileParams,
-          }],
-        },
-      },
+      request: { execute: executeRequest },
       timeout: 5000,
     });
 
+    log('getOffers() response received');
     const raw = extractJsonOffer(response);
-    if (!raw) return null;
 
+    if (!raw) {
+      log('No personalised offer from Target for this visitor/audience');
+      return null;
+    }
+
+    log('Calling applyOffers() for analytics tracking...');
     window.adobe.target.applyOffers({ response });
+    log('applyOffers() complete');
 
-    return normaliseOfferToCfShape(raw);
+    const normalised = normaliseOfferToCfShape(raw);
+    log('Target offer ready to render:', normalised?.title);
+    return normalised;
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.warn('Promotion block: getOffers failed', err);
+    logError('getOffers() failed:', err);
     return null;
   }
 }
@@ -176,7 +233,9 @@ async function fetchTargetOffer(mbox) {
  * Render a promotion card from CF-shaped data
  * ──────────────────────────────────────────── */
 
-async function renderCard(block, cfItem, isAuthor) {
+async function renderCard(block, cfItem, isAuthor, source = 'default') {
+  log(`Rendering card [${source}]:`, cfItem?.title);
+
   const imgUrl = isAuthor
     ? (cfItem.bannerimage?._authorUrl || cfItem.bannerimage?._publishUrl)
     : (cfItem.bannerimage?._publishUrl || cfItem.bannerimage?._authorUrl);
@@ -199,6 +258,9 @@ async function renderCard(block, cfItem, isAuthor) {
       if (mapped) ctaHref = mapped;
     } catch { /* keep original */ }
   }
+
+  log(`  Image: ${imgUrl || '(none)'}`);
+  log(`  CTA: "${cfItem.ctalabel}" → ${ctaHref}`);
 
   const card = document.createElement('div');
   card.className = 'promotion-card';
@@ -258,6 +320,7 @@ async function renderCard(block, cfItem, isAuthor) {
   card.appendChild(content);
   block.innerHTML = '';
   block.appendChild(card);
+  log(`Card rendered [${source}] ✓`);
 }
 
 /* ────────────────────────────────────────────
@@ -265,7 +328,7 @@ async function renderCard(block, cfItem, isAuthor) {
  *
  * Flow on publish/live:
  *  1. Render the author-selected default CF immediately
- *  2. In the background, wait for at.js → call getOffer()
+ *  2. In the background, wait for at.js → call getOffers()
  *  3. If Target returns a personalized offer, swap the card
  *
  * This avoids a blank gap while at.js loads (~3 s)
@@ -278,6 +341,9 @@ export default async function decorate(block) {
   const variation = block.querySelector(':scope div:nth-child(2) > div')?.textContent?.trim()?.toLowerCase()?.replace(' ', '_') || 'master';
   const mboxName = block.querySelector(':scope div:nth-child(3) > div')?.textContent?.trim() || DEFAULT_MBOX;
 
+  log('========== Promotion block init ==========');
+  log('Config:', { contentPath, variation, mboxName });
+
   block.innerHTML = '';
 
   const isAuthor = isAuthorEnvironment();
@@ -286,7 +352,10 @@ export default async function decorate(block) {
   const aemAuthorUrl = getMetadata('authorurl') || '';
   const aemPublishUrl = hostname?.replace('author', 'publish')?.replace(/\/$/, '') || '';
 
+  log('Environment:', { isAuthor, hostname, aemAuthorUrl, aemPublishUrl });
+
   if (!contentPath) {
+    logWarn('No content path configured');
     if (isAuthor) {
       block.innerHTML = `<div class="promotion-card promotion-placeholder">
         <div class="promotion-content">
@@ -303,23 +372,26 @@ export default async function decorate(block) {
     const cfItem = await fetchContentFragment(contentPath, variation, isAuthor, aemAuthorUrl, aemPublishUrl);
 
     if (cfItem) {
-      await renderCard(block, cfItem, isAuthor);
+      await renderCard(block, cfItem, isAuthor, 'default-CF');
+    } else {
+      logWarn('Default CF returned null – block will be empty unless Target provides an offer');
     }
 
-    // if (isAuthor) return;
-
+    log('Starting background Target fetch...');
     fetchTargetOffer(mboxName).then(async (targetItem) => {
       if (targetItem) {
-        await renderCard(block, targetItem, false);
+        log('🎯 Target returned a personalised offer – swapping card');
+        await renderCard(block, targetItem, false, 'target-personalised');
         block.classList.add('promotion-personalised');
+        log('Card swap complete ✓');
+      } else {
+        log('No Target offer – keeping default CF');
       }
     }).catch((err) => {
-      // eslint-disable-next-line no-console
-      console.warn('Promotion block: Target personalisation failed, keeping default CF', err);
+      logWarn('Target personalisation failed, keeping default CF:', err);
     });
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('Promotion block: error', err);
+    logError('Block decoration failed:', err);
     block.innerHTML = '';
   }
 }
