@@ -130,8 +130,16 @@
   cursor: pointer;
 }
 
+.promotion-wrapper .promotion .promotion-card .promotion-cta a.button::after {
+  color: var(--text-light, #fff);
+}
+
 .promotion-wrapper .promotion .promotion-card .promotion-cta a.button:hover {
   background: transparent;
+  color: var(--main-accent-color, #026169);
+}
+
+.promotion-wrapper .promotion .promotion-card .promotion-cta a.button:hover::after {
   color: var(--main-accent-color, #026169);
 }
 
